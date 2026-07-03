@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>人力资源 · People Atlas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@500;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* 私人名录风：暖纸底 + 墨字 + 三类人各自的印章色 */
+:root{
+  --paper:#f6f3ec; --paper2:#efe9dd; --card:#fffdf8;
+  --ink:#2b2620; --ink2:#6b6255; --ink3:#a39a8a; --line:#e2dacb; --line2:#cfc4ae;
+  --friend:#b4524b;   /* 朋友 · 印泥红 */
+  --work:#43617d;     /* 工作 · 靛青 */
+  --venture:#a2762c;  /* 创业 · 铜金 */
+  --green:#4d7c54; --red:#b4524b;
+  --mono:'IBM Plex Mono',monospace; --sans:'IBM Plex Sans','Noto Sans SC',sans-serif; --serif:'Noto Serif SC',serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.6;-webkit-font-smoothing:antialiased;
+  background-image:radial-gradient(900px 400px at 90% -8%, rgba(162,118,44,.06), transparent 60%)}
+.wrap{max-width:1080px;margin:0 auto;padding:0 18px}
+header{border-bottom:1px solid var(--line);position:sticky;top:0;z-index:20;background:rgba(246,243,236,.94);backdrop-filter:blur(8px)}
+.top{display:flex;align-items:center;justify-content:space-between;padding:14px 0;gap:12px;flex-wrap:wrap}
+.brand{font-family:var(--serif);font-weight:700;font-size:24px;letter-spacing:1px}
+.brand small{font-family:var(--mono);font-size:10px;color:var(--ink3);letter-spacing:3px;display:block;margin-top:-3px}
+.brand .seal{display:inline-block;width:12px;height:12px;background:var(--friend);border-radius:2px;margin-right:8px;transform:rotate(6deg)}
+.tools{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-family:var(--mono);font-size:11.5px;color:var(--ink2)}
+.iconbtn{background:none;border:1px solid var(--line2);color:var(--ink2);font-family:var(--mono);font-size:11px;padding:5px 10px;border-radius:6px;cursor:pointer}
+.iconbtn:hover{color:var(--ink);border-color:var(--ink3)}
+.sync{display:inline-flex;align-items:center;gap:6px;padding:5px 10px;border:1px solid var(--line);border-radius:999px;white-space:nowrap}
+.sync .dot{width:7px;height:7px;border-radius:50%;background:var(--ink3)}
+.sync.ok .dot{background:var(--green)} .sync.busy .dot{background:var(--venture);animation:pulse 1s infinite}
+.sync.dirty .dot{background:var(--venture)} .sync.err .dot{background:var(--red)}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+
+nav.cats{display:flex;gap:0;border-bottom:none}
+.cat-tab{background:none;border:none;font-family:var(--serif);font-size:15.5px;color:var(--ink2);padding:10px 18px;cursor:pointer;
+  border-bottom:3px solid transparent;display:flex;align-items:center;gap:7px}
+.cat-tab .n{font-family:var(--mono);font-size:11px;color:var(--ink3)}
+.cat-tab.active{color:var(--ink);border-bottom-color:var(--acc,var(--ink))}
+.cat-tab:hover{color:var(--ink)}
+
+main{padding:20px 0 80px}
+.controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:16px}
+.search{flex:1;min-width:200px;position:relative}
+.search input{width:100%;background:var(--card);border:1px solid var(--line2);border-radius:8px;padding:9px 12px 9px 32px;font-size:14px;color:var(--ink);font-family:var(--sans)}
+.search input:focus{outline:none;border-color:var(--ink3)}
+.search svg{position:absolute;left:9px;top:50%;transform:translateY(-50%);opacity:.4}
+select.ctl{background:var(--card);border:1px solid var(--line2);border-radius:8px;color:var(--ink);padding:9px 10px;font-size:13px;font-family:var(--sans);cursor:pointer}
+.btn{background:var(--ink);color:var(--paper);border:none;font-family:var(--mono);font-size:12.5px;font-weight:500;padding:10px 16px;border-radius:8px;cursor:pointer;letter-spacing:.5px}
+.btn:hover{opacity:.88}
+.btn.ghost{background:none;color:var(--ink2);border:1px solid var(--line2)}
+.btn.danger{background:var(--red)}
+
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px}
+.pcard{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px 16px 12px;cursor:pointer;position:relative;
+  transition:border-color .15s, transform .15s;border-top:3px solid var(--acc,var(--line2))}
+.pcard:hover{border-color:var(--line2);transform:translateY(-1px)}
+.pcard .nm{font-family:var(--serif);font-size:17.5px;font-weight:700;display:flex;align-items:baseline;gap:8px}
+.pcard .score{margin-left:auto;font-family:var(--mono);font-size:15px;color:var(--acc)}
+.pcard .score small{font-size:10px;color:var(--ink3)}
+.pcard .meta{margin-top:6px;display:flex;gap:5px;flex-wrap:wrap;font-size:11px;color:var(--ink2)}
+.pill{border:1px solid var(--line);border-radius:5px;padding:1px 7px;background:var(--paper2);white-space:nowrap}
+.pcard .snip{margin-top:8px;font-size:12.5px;color:var(--ink2);display:-webkit-box;-webkit-line-clamp:2;line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.pcard .foot{margin-top:8px;font-family:var(--mono);font-size:10.5px;color:var(--ink3);display:flex;gap:10px}
+.empty{grid-column:1/-1;text-align:center;color:var(--ink3);padding:60px 20px;font-family:var(--serif);font-size:15px;line-height:2.2}
+.empty .big{font-size:34px}
+
+/* 抽屉编辑 */
+.overlay{position:fixed;inset:0;background:rgba(43,38,32,.35);z-index:50;display:none}
+.overlay.on{display:block}
+.drawer{position:fixed;top:0;right:0;bottom:0;width:min(680px,100%);background:var(--paper);z-index:51;border-left:1px solid var(--line2);
+  transform:translateX(102%);transition:transform .22s ease;display:flex;flex-direction:column}
+.drawer.on{transform:none}
+.dr-h{display:flex;align-items:center;gap:10px;padding:14px 20px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.dr-h .cat-seal{font-family:var(--mono);font-size:10.5px;color:#fff;background:var(--acc);padding:2px 8px;border-radius:4px}
+.dr-h .sc{margin-left:auto;font-family:var(--mono);font-size:13px;color:var(--acc)}
+.dr-body{flex:1;overflow-y:auto;padding:18px 20px 40px}
+.field{margin-bottom:14px}
+.field label{display:block;font-family:var(--mono);font-size:10.5px;letter-spacing:.8px;color:var(--ink2);margin-bottom:5px;text-transform:uppercase}
+.field input,.field textarea{width:100%;background:var(--card);border:1px solid var(--line2);border-radius:8px;padding:9px 11px;font-size:14px;color:var(--ink);font-family:var(--sans)}
+.field textarea{resize:vertical;min-height:64px;line-height:1.65}
+.field input:focus,.field textarea:focus{outline:none;border-color:var(--ink3)}
+.field .hint{font-size:11px;color:var(--ink3);margin-top:4px;font-family:var(--mono)}
+.name-in{font-family:var(--serif) !important;font-size:20px !important;font-weight:700}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:560px){.two{grid-template-columns:1fr}}
+
+.dims{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin-bottom:14px}
+.dims h4{font-family:var(--mono);font-size:11px;letter-spacing:1px;color:var(--ink2);margin-bottom:10px;display:flex;align-items:baseline}
+.dims h4 .total{margin-left:auto;font-size:15px;color:var(--acc)}
+.dim-row{display:grid;grid-template-columns:110px 1fr 46px 20px;gap:10px;align-items:center;padding:5px 0}
+.dim-row .dn{font-size:13px;color:var(--ink)}
+.dim-row .dn small{color:var(--ink3);font-family:var(--mono);font-size:10px}
+.dim-row input[type=range]{width:100%;accent-color:var(--acc)}
+.dim-row .dv{font-family:var(--mono);font-size:13px;text-align:right;color:var(--acc)}
+.dim-row .dv.unset{color:var(--ink3)}
+.dim-row .dx{color:var(--ink3);cursor:pointer;font-size:12px;text-align:center;visibility:hidden}
+.dim-row:hover .dx{visibility:visible}
+.tagbox{display:flex;gap:6px;flex-wrap:wrap;align-items:center;background:var(--card);border:1px solid var(--line2);border-radius:8px;padding:7px 9px}
+.tagchip{background:var(--paper2);border:1px solid var(--line);border-radius:5px;padding:1px 8px;font-size:12px}
+.tagchip b{cursor:pointer;color:var(--ink3);font-weight:400;margin-left:3px}
+.tagbox input{border:none;background:none;flex:1;min-width:90px;font-size:13px;color:var(--ink);padding:2px}
+.tagbox input:focus{outline:none}
+.dr-foot{display:flex;gap:10px;padding:12px 20px;border-top:1px solid var(--line)}
+
+/* 设置 & 通用模态 */
+.modal-ov{position:fixed;inset:0;background:rgba(43,38,32,.4);z-index:60;display:none;align-items:flex-start;justify-content:center;padding:46px 16px;overflow-y:auto}
+.modal-ov.on{display:flex}
+.modal{background:var(--paper);border:1px solid var(--line2);border-radius:12px;width:100%;max-width:560px;box-shadow:0 24px 60px rgba(43,38,32,.25)}
+.modal h3{font-family:var(--serif);font-size:17px;padding:16px 20px;border-bottom:1px solid var(--line);display:flex}
+.modal h3 .x{margin-left:auto;cursor:pointer;color:var(--ink3);font-family:var(--sans);font-weight:400}
+.modal .mb{padding:16px 20px}
+.modal .mf{padding:12px 20px 16px;display:flex;gap:10px;justify-content:flex-end;border-top:1px solid var(--line)}
+.dim-edit{display:grid;grid-template-columns:1fr 64px 28px;gap:8px;margin-bottom:7px;align-items:center}
+.dim-edit input{background:var(--card);border:1px solid var(--line2);border-radius:6px;padding:6px 9px;font-size:13px;color:var(--ink)}
+.dim-edit .del{color:var(--red);cursor:pointer;text-align:center;font-size:13px}
+.acc-h{font-family:var(--serif);font-size:14.5px;font-weight:700;margin:14px 0 8px;display:flex;align-items:center;gap:8px}
+.acc-h .seal{width:9px;height:9px;border-radius:2px;transform:rotate(6deg)}
+.privnote{font-family:var(--mono);font-size:10.5px;color:var(--ink3);line-height:1.7;border-top:1px dashed var(--line2);margin-top:14px;padding-top:10px}
+footer{border-top:1px solid var(--line);padding:16px 0 28px;text-align:center;color:var(--ink3);font-family:var(--mono);font-size:10.5px;letter-spacing:.5px}
+.toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--ink);color:var(--paper);
+  font-family:var(--mono);font-size:12px;padding:10px 18px;border-radius:8px;z-index:80;transition:transform .25s}
+.toast.show{transform:translateX(-50%) translateY(0)}
+.toast.err{background:var(--red)}
+@media(max-width:640px){.cat-tab{padding:10px 10px;font-size:14px}.grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <div class="top">
+      <div class="brand"><span class="seal"></span><span data-i18n="brand">人力资源</span><small>PEOPLE ATLAS · PRIVATE</small></div>
+      <div class="tools">
+        <span class="sync" id="sync"><span class="dot"></span><span id="sync-t" data-i18n="notConf">未配置</span></span>
+        <button class="iconbtn" onclick="manualSync()" data-i18n="syncBtn">⟳ 同步</button>
+        <button class="iconbtn" id="langBtn" onclick="toggleLang()">EN</button>
+        <button class="iconbtn" onclick="openSettings()" data-i18n="setBtn">⚙ 设置</button>
+      </div>
+    </div>
+    <nav class="cats" id="cats"></nav>
+  </div>
+</header>
+
+<main class="wrap">
+  <div class="controls">
+    <div class="search">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+      <input id="search" data-i18n-ph="searchPh" placeholder="搜索姓名 / 标签 / 来源 / 侧写 / 备注…">
+    </div>
+    <select class="ctl" id="sortsel">
+      <option value="score" data-i18n="s_score">按综合分</option>
+      <option value="updated" data-i18n="s_updated">按最近更新</option>
+      <option value="last" data-i18n="s_last">按上次联系</option>
+      <option value="name" data-i18n="s_name">按姓名</option>
+    </select>
+    <button class="btn" id="addBtn" onclick="addPerson()">＋ <span data-i18n="addBtn">添加</span></button>
+  </div>
+  <div class="grid" id="grid"></div>
+</main>
+
+<!-- 抽屉编辑 -->
+<div class="overlay" id="ov" onclick="closeDrawer()"></div>
+<aside class="drawer" id="drawer"></aside>
+
+<!-- 设置模态 -->
+<div class="modal-ov" id="set-ov">
+  <div class="modal">
+    <h3><span data-i18n="setTitle">⚙ 设置</span><span class="x" onclick="closeSettings()">✕</span></h3>
+    <div class="mb" id="set-body"></div>
+    <div class="mf">
+      <button class="btn ghost" onclick="exportBackup()" data-i18n="exportBtn">⬇ 导出备份</button>
+      <button class="btn" onclick="closeSettings()" data-i18n="doneBtn">完成</button>
+    </div>
+  </div>
+</div>
+
+<footer data-i18n="foot">纯私人名录 · 数据只存私有仓库 · 本库无任何公开展示/导出到公开仓库的功能</footer>
+<div class="toast" id="toast"></div>
+
+<script>
+/* =====================================================================
+   人力资源（People Atlas）：量化朋友 / 工作人脉 / 创业人脉 三类分开管理。
+   - 每类有独立、可编辑的打分维度（名称+权重），综合分 = 已评维度的加权平均（0-10）
+   - 人的字段全部可选：联系方式 / 来源 / 人物侧写 / 备注 / 标签 / 上次联系
+   - 数据存私有仓库 Database/people.json（pha-config 共享令牌），本地缓存秒开
+   - ⚠️ 本库为纯私人数据：没有、也绝不添加任何「公开展示 / 发布到 Database-Public」功能
+   ===================================================================== */
+const PHA_KEY='pha-config';
+const DATA_PATH='people.json';
+const CACHE_KEY='people_cache_v1';
+
+const CATS={
+  friends:{label:'量化朋友', labelEn:'Friends',  color:'var(--friend)', noun:'朋友', nounEn:'friend'},
+  work:   {label:'工作人脉', labelEn:'Work',     color:'var(--work)',   noun:'人脉', nounEn:'contact'},
+  venture:{label:'创业人脉', labelEn:'Venture',  color:'var(--venture)',noun:'人脉', nounEn:'contact'},
+};
+const CAT_KEYS=Object.keys(CATS);
+
+/* 每类默认维度（可在设置里增删改；朋友与人脉维度不同） */
+function defaultDims(){
+  return {
+    friends:[
+      {id:'f1',name:'信任',weight:2},{id:'f2',name:'相处舒适',weight:1.5},{id:'f3',name:'三观契合',weight:1.5},
+      {id:'f4',name:'互相支持',weight:1.5},{id:'f5',name:'有趣',weight:1},{id:'f6',name:'联系频率',weight:1},
+    ],
+    work:[
+      {id:'w1',name:'专业能力',weight:2},{id:'w2',name:'影响力/资源',weight:1.5},{id:'w3',name:'关系热度',weight:1.5},
+      {id:'w4',name:'互惠潜力',weight:1.5},{id:'w5',name:'靠谱程度',weight:1},
+    ],
+    venture:[
+      {id:'v1',name:'资源价值',weight:2},{id:'v2',name:'能力互补',weight:1.5},{id:'v3',name:'靠谱程度',weight:2},
+      {id:'v4',name:'合作意愿',weight:1.5},{id:'v5',name:'人脉广度',weight:1},
+    ],
+  };
+}
+function defaultData(){ return {version:1, updatedAt:null, dims:defaultDims(), people:[]}; }
+
+let cfg={owner:'NickkkLian',repo:'Database',token:''};
+let data=defaultData();
+let fileSha=null, saveTimer=null, saving=false, dirty=false;
+let ui={cat:'friends', search:'', sort:'score'};
+let drawerId=null;
+
+/* ============ 双语（pha-lang 共享） ============ */
+let lang=(()=>{try{return localStorage.getItem('pha-lang')==='en'?'en':'zh';}catch(e){return 'zh';}})();
+const T=(zh,en)=>lang==='en'?en:zh;
+const catLabel=c=>lang==='en'?CATS[c].labelEn:CATS[c].label;
+const I18N={
+  brand:{zh:'人力资源',en:'People Atlas'},
+  notConf:{zh:'未配置',en:'Not set'},
+  syncBtn:{zh:'⟳ 同步',en:'⟳ Sync'},
+  setBtn:{zh:'⚙ 设置',en:'⚙ Settings'},
+  searchPh:{zh:'搜索姓名 / 标签 / 来源 / 侧写 / 备注…',en:'Search name / tags / source / profile / notes…'},
+  s_score:{zh:'按综合分',en:'By score'}, s_updated:{zh:'按最近更新',en:'By updated'},
+  s_last:{zh:'按上次联系',en:'By last contact'}, s_name:{zh:'按姓名',en:'By name'},
+  addBtn:{zh:'添加',en:'Add'},
+  setTitle:{zh:'⚙ 设置',en:'⚙ Settings'},
+  exportBtn:{zh:'⬇ 导出备份',en:'⬇ Backup'}, doneBtn:{zh:'完成',en:'Done'},
+  foot:{zh:'纯私人名录 · 数据只存私有仓库 · 本库无任何公开展示/导出到公开仓库的功能',en:'Private ledger · data lives only in your private repo · this app has no public-showcase/export feature'},
+  langBtn:{zh:'EN',en:'中'},
+};
+const Ls=k=>(I18N[k]||{zh:k,en:k})[lang];
+function applyStatic(){
+  document.documentElement.lang=lang==='en'?'en':'zh-CN';
+  document.title=lang==='en'?'People Atlas':'人力资源 · People Atlas';
+  document.querySelectorAll('[data-i18n]').forEach(el=>{el.textContent=Ls(el.dataset.i18n);});
+  document.querySelectorAll('[data-i18n-ph]').forEach(el=>{el.placeholder=Ls(el.dataset.i18nPh);});
+  const lb=document.getElementById('langBtn'); if(lb) lb.textContent=Ls('langBtn');
+}
+function toggleLang(){ lang=lang==='en'?'zh':'en'; try{localStorage.setItem('pha-lang',lang);}catch(e){} applyStatic(); renderAll(); if(drawerId) openDrawer(drawerId); }
+
+/* ============ 工具 ============ */
+const $=id=>document.getElementById(id);
+const esc=s=>(s==null?'':String(s)).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+function toast(msg,isErr){const t=$('toast');t.textContent=msg;t.className='toast show'+(isErr?' err':'');clearTimeout(t._m);t._m=setTimeout(()=>t.className='toast'+(isErr?' err':''),2600);}
+function b64e(str){const b=new TextEncoder().encode(str);let s='';for(let i=0;i<b.length;i+=0x8000)s+=String.fromCharCode.apply(null,b.subarray(i,i+0x8000));return btoa(s);}
+function b64d(b64){const bin=atob(String(b64).replace(/\s/g,''));const b=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)b[i]=bin.charCodeAt(i);return new TextDecoder().decode(b);}
+function setSync(state,txt){const el=$('sync');el.className='sync '+state;$('sync-t').textContent=txt;}
+
+/* ============ 配置 & 数据规整 ============ */
+function loadCfg(){
+  try{const c=JSON.parse(localStorage.getItem(PHA_KEY)||'null');if(c)cfg=Object.assign(cfg,{owner:c.owner||cfg.owner,repo:c.repo||cfg.repo,token:c.token||''});}catch(e){}
+}
+function configured(){return !!(cfg.owner&&cfg.repo&&cfg.token);}
+function normalize(d){
+  d=d&&typeof d==='object'?d:{};
+  const dd=defaultDims();
+  const dims={};
+  CAT_KEYS.forEach(k=>{
+    const arr=Array.isArray(d.dims&&d.dims[k])?d.dims[k]:dd[k];
+    dims[k]=arr.filter(x=>x&&x.name!=null).map(x=>({id:x.id||uid(),name:String(x.name),weight:(+x.weight>0?+x.weight:1)}));
+  });
+  const people=(Array.isArray(d.people)?d.people:[]).map(p=>({
+    id:p.id||uid(), cat:CAT_KEYS.includes(p.cat)?p.cat:'friends',
+    name:String(p.name||''), scores:(p.scores&&typeof p.scores==='object')?p.scores:{},
+    contact:p.contact||'', source:p.source||'', profile:p.profile||'', notes:p.notes||'',
+    tags:Array.isArray(p.tags)?p.tags.filter(t=>typeof t==='string'):[],
+    lastContact:p.lastContact||'',
+    createdAt:p.createdAt||new Date().toISOString(), updatedAt:p.updatedAt||new Date().toISOString(),
+  }));
+  return {version:1, updatedAt:d.updatedAt||null, dims, people};
+}
+function cache(){try{localStorage.setItem(CACHE_KEY,JSON.stringify({data,fileSha}));}catch(e){}}
+function loadCache(){try{const c=JSON.parse(localStorage.getItem(CACHE_KEY)||'null');if(c){data=normalize(c.data);fileSha=c.fileSha||null;}}catch(e){}}
+
+/* ============ GitHub 同步（私有库 people.json；sha 冲突自动取新重试） ============ */
+function ghUrl(){return `https://api.github.com/repos/${cfg.owner}/${cfg.repo}/contents/${DATA_PATH}`;}
+function ghHeaders(){return {Authorization:'Bearer '+cfg.token,Accept:'application/vnd.github+json','X-GitHub-Api-Version':'2022-11-28'};}
+async function ghPull(){
+  if(!configured()){setSync('idle',T('未配置','Not set'));return;}
+  setSync('busy',T('拉取中…','Pulling…'));
+  try{
+    const r=await fetch(ghUrl()+'?t='+Date.now(),{headers:ghHeaders(),cache:'no-store'});
+    if(r.status===404){fileSha=null;setSync('ok',T('已连接 · 待创建','Connected · new'));cache();renderAll();return;}
+    if(!r.ok)throw new Error('HTTP '+r.status);
+    const j=await r.json();
+    fileSha=j.sha; data=normalize(JSON.parse(b64d(j.content)));
+    cache();renderAll();setSync('ok',T('已同步','Synced'));
+  }catch(e){setSync('err',T('拉取失败','Pull failed'));toast(T('拉取失败：','Pull failed: ')+e.message,true);}
+}
+async function ghPush(silent){
+  if(!configured()){setSync('idle',T('未配置（本地）','Local only'));return;}
+  if(saving)return; saving=true;
+  setSync('busy',T('同步中…','Syncing…'));
+  data.updatedAt=new Date().toISOString();
+  const body={message:'people: update '+data.updatedAt.slice(0,16),content:b64e(JSON.stringify(data,null,2))};
+  if(fileSha)body.sha=fileSha;
+  try{
+    let r=await fetch(ghUrl(),{method:'PUT',headers:{...ghHeaders(),'Content-Type':'application/json'},body:JSON.stringify(body)});
+    if(r.status===409||r.status===422){  // sha 过期：取最新重试一次
+      const cur=await fetch(ghUrl()+'?t='+Date.now(),{headers:ghHeaders(),cache:'no-store'});
+      if(cur.ok){fileSha=(await cur.json()).sha;body.sha=fileSha;}
+      r=await fetch(ghUrl(),{method:'PUT',headers:{...ghHeaders(),'Content-Type':'application/json'},body:JSON.stringify(body)});
+    }
+    if(!r.ok)throw new Error('HTTP '+r.status);
+    fileSha=(await r.json()).content.sha; dirty=false;
+    cache();setSync('ok',T('已同步','Synced'));if(!silent)toast(T('已同步到私有仓库','Synced to private repo'));
+  }catch(e){setSync('err',T('同步失败','Sync failed'));toast(T('同步失败：','Sync failed: ')+e.message,true);}
+  finally{saving=false;}
+}
+function markDirty(){dirty=true;cache();setSync('dirty',T('待同步…','Pending…'));clearTimeout(saveTimer);if(configured())saveTimer=setTimeout(()=>ghPush(true),1800);}
+async function manualSync(){ if(dirty) await ghPush(false); else await ghPull(); }
+
+/* ============ 打分 ============ */
+function dimsOf(cat){return data.dims[cat]||[];}
+function scoreOf(p){
+  const dims=dimsOf(p.cat);let sw=0,acc=0;
+  dims.forEach(d=>{const v=p.scores[d.id];if(typeof v==='number'&&!isNaN(v)){acc+=v*d.weight;sw+=d.weight;}});
+  if(!sw)return null;
+  return Math.round(acc/sw*10)/10;
+}
+
+/* ============ 渲染 ============ */
+function renderAll(){renderCats();renderGrid();}
+function renderCats(){
+  $('cats').innerHTML=CAT_KEYS.map(k=>{
+    const n=data.people.filter(p=>p.cat===k).length;
+    return `<button class="cat-tab${ui.cat===k?' active':''}" style="--acc:${CATS[k].color}" onclick="setCat('${k}')">${esc(catLabel(k))} <span class="n">${n}</span></button>`;
+  }).join('');
+}
+function setCat(k){ui.cat=k;renderAll();}
+function filtered(){
+  let list=data.people.filter(p=>p.cat===ui.cat);
+  const q=ui.search.trim().toLowerCase();
+  if(q)list=list.filter(p=>[p.name,p.source,p.profile,p.notes,p.contact,(p.tags||[]).join(' ')].join(' ').toLowerCase().includes(q));
+  list.sort((a,b)=>{
+    if(ui.sort==='name')return (a.name||'').localeCompare(b.name||'','zh');
+    if(ui.sort==='updated')return (b.updatedAt||'').localeCompare(a.updatedAt||'');
+    if(ui.sort==='last')return (b.lastContact||'').localeCompare(a.lastContact||'');
+    return (scoreOf(b)??-1)-(scoreOf(a)??-1);
+  });
+  return list;
+}
+function renderGrid(){
+  const list=filtered();const c=CATS[ui.cat];
+  if(!list.length){
+    $('grid').innerHTML=`<div class="empty"><div class="big">☰</div>${
+      data.people.filter(p=>p.cat===ui.cat).length
+        ? T('没有匹配的结果','No matches')
+        : T(`还没有${c.label.slice(-2)==='朋友'?'朋友':'人脉'}。点右上「＋ 添加」建第一张人物卡。`,'Empty — click “+ Add” to create the first card.')
+    }</div>`;
+    return;
+  }
+  $('grid').innerHTML=list.map(p=>{
+    const sc=scoreOf(p);
+    const tags=(p.tags||[]).slice(0,3).map(t=>`<span class="pill">#${esc(t)}</span>`).join('');
+    const src=p.source?`<span class="pill">📍 ${esc(p.source.slice(0,14))}</span>`:'';
+    const ct=p.contact?`<span class="pill">☎</span>`:'';
+    const snip=(p.profile||p.notes||'').trim();
+    return `<div class="pcard" style="--acc:${CATS[p.cat].color}" onclick="openDrawer('${p.id}')">
+      <div class="nm">${esc(p.name||T('未命名','Unnamed'))}<span class="score">${sc==null?`<small>${T('未评','—')}</small>`:sc.toFixed(1)+'<small>/10</small>'}</span></div>
+      <div class="meta">${src}${ct}${tags}</div>
+      ${snip?`<div class="snip">${esc(snip)}</div>`:''}
+      <div class="foot"><span>${T('更新','upd')} ${(p.updatedAt||'').slice(0,10)}</span>${p.lastContact?`<span>${T('联系','met')} ${esc(p.lastContact)}</span>`:''}</div>
+    </div>`;
+  }).join('');
+}
+
+/* ============ 抽屉编辑 ============ */
+function addPerson(){
+  const p={id:uid(),cat:ui.cat,name:'',scores:{},contact:'',source:'',profile:'',notes:'',tags:[],lastContact:'',
+    createdAt:new Date().toISOString(),updatedAt:new Date().toISOString()};
+  data.people.unshift(p);markDirty();renderAll();openDrawer(p.id,true);
+}
+function person(id){return data.people.find(p=>p.id===id);}
+function openDrawer(id,isNew){
+  const p=person(id);if(!p)return;
+  drawerId=id;const c=CATS[p.cat];
+  const dims=dimsOf(p.cat);
+  const dimRows=dims.map(d=>{
+    const v=p.scores[d.id];const has=typeof v==='number';
+    return `<div class="dim-row">
+      <span class="dn">${esc(d.name)} <small>×${d.weight}</small></span>
+      <input type="range" min="0" max="10" step="0.5" value="${has?v:5}" data-dim="${d.id}" ${has?'':'data-unset="1"'}>
+      <span class="dv${has?'':' unset'}" data-dv="${d.id}">${has?v:'—'}</span>
+      <span class="dx" data-dx="${d.id}" title="${T('清除此项评分','Clear this score')}">✕</span>
+    </div>`;
+  }).join('');
+  const tags=(p.tags||[]).map(t=>`<span class="tagchip">#${esc(t)}<b data-rmtag="${esc(t)}">✕</b></span>`).join('');
+  const catOpts=CAT_KEYS.map(k=>`<option value="${k}" ${p.cat===k?'selected':''}>${esc(catLabel(k))}</option>`).join('');
+  const sc=scoreOf(p);
+  $('drawer').innerHTML=`
+  <div class="dr-h" style="--acc:${c.color}">
+    <span class="cat-seal">${esc(catLabel(p.cat))}</span>
+    <span style="font-family:var(--serif);font-weight:700">${esc(p.name||T('新人物','New person'))}</span>
+    <span class="sc" id="dr-sc">${sc==null?T('未评分','Unscored'):T('综合 ','Score ')+sc.toFixed(1)+'/10'}</span>
+  </div>
+  <div class="dr-body" style="--acc:${c.color}">
+    <div class="field"><input class="name-in" id="p-name" placeholder="${T('姓名 / 称呼…','Name…')}" value="${esc(p.name)}"></div>
+    <div class="two">
+      <div class="field"><label>${T('分类','Category')}</label>
+        <select class="ctl" id="p-cat" style="width:100%">${catOpts}</select></div>
+      <div class="field"><label>${T('上次联系（选填）','Last contact (optional)')}</label>
+        <input type="date" id="p-last" value="${esc(p.lastContact)}"></div>
+    </div>
+    <div class="dims">
+      <h4>${T('打分','SCORES')} <span style="color:var(--ink3);margin-left:8px">${T('（未拖过=未评，不计入综合分）','(untouched = unscored)')}</span><span class="total" id="dr-total">${sc==null?'—':sc.toFixed(1)}</span></h4>
+      ${dimRows||`<div class="hint">${T('该分类还没有维度，去 ⚙ 设置里添加。','No dimensions yet — add some in ⚙ Settings.')}</div>`}
+    </div>
+    <div class="field"><label>${T('联系方式（选填）','Contact (optional)')}</label>
+      <textarea id="p-contact" style="min-height:52px" placeholder="${T('微信 / 电话 / 邮箱 / LinkedIn…','WeChat / phone / email / LinkedIn…')}">${esc(p.contact)}</textarea></div>
+    <div class="field"><label>${T('来源（选填）','Source (optional)')}</label>
+      <input id="p-source" placeholder="${T('怎么认识的：场合 / 介绍人 / 平台…','How you met: occasion / introducer / platform…')}" value="${esc(p.source)}"></div>
+    <div class="field"><label>${T('人物侧写（选填）','Profile (optional)')}</label>
+      <textarea id="p-profile" style="min-height:90px" placeholder="${T('TA 是什么样的人：背景、性格、擅长、在意什么、相处注意点…','Who they are: background, personality, strengths, what they care about…')}">${esc(p.profile)}</textarea></div>
+    <div class="field"><label>${T('备注（选填）','Notes (optional)')}</label>
+      <textarea id="p-notes" placeholder="${T('近况、约定、待办、送礼记录…','Recent updates, promises, follow-ups, gifts…')}">${esc(p.notes)}</textarea></div>
+    <div class="field"><label>${T('标签','Tags')}</label>
+      <div class="tagbox" id="tagbox">${tags}<input id="tag-in" placeholder="${T('加标签 ↵','Add tag ↵')}"></div></div>
+  </div>
+  <div class="dr-foot">
+    <button class="btn danger" onclick="delPerson('${p.id}')">${T('删除','Delete')}</button>
+    <span style="flex:1"></span>
+    <button class="btn" onclick="closeDrawer()">${T('完成','Done')}</button>
+  </div>`;
+  $('ov').classList.add('on');$('drawer').classList.add('on');
+  bindDrawer(p);
+  if(isNew)setTimeout(()=>$('p-name').focus(),120);
+}
+function bindDrawer(p){
+  const upd=()=>{p.updatedAt=new Date().toISOString();markDirty();};
+  $('p-name').oninput=e=>{p.name=e.target.value;upd();};
+  $('p-cat').onchange=e=>{p.cat=e.target.value;upd();openDrawer(p.id);renderAll();};
+  $('p-last').onchange=e=>{p.lastContact=e.target.value;upd();};
+  $('p-contact').oninput=e=>{p.contact=e.target.value;upd();};
+  $('p-source').oninput=e=>{p.source=e.target.value;upd();};
+  $('p-profile').oninput=e=>{p.profile=e.target.value;upd();};
+  $('p-notes').oninput=e=>{p.notes=e.target.value;upd();};
+  // 打分滑块：拖动=评分；✕=清除该项
+  document.querySelectorAll('#drawer input[type=range]').forEach(sl=>{
+    sl.oninput=()=>{
+      sl.removeAttribute('data-unset');
+      p.scores[sl.dataset.dim]=+sl.value;
+      const dv=document.querySelector(`[data-dv="${sl.dataset.dim}"]`);dv.textContent=sl.value;dv.classList.remove('unset');
+      refreshScore(p);upd();
+    };
+  });
+  document.querySelectorAll('#drawer [data-dx]').forEach(x=>{
+    x.onclick=()=>{
+      delete p.scores[x.dataset.dx];
+      const sl=document.querySelector(`input[data-dim="${x.dataset.dx}"]`);sl.value=5;sl.setAttribute('data-unset','1');
+      const dv=document.querySelector(`[data-dv="${x.dataset.dx}"]`);dv.textContent='—';dv.classList.add('unset');
+      refreshScore(p);upd();
+    };
+  });
+  // 标签
+  const ti=$('tag-in');
+  ti.onkeydown=e=>{
+    if(e.key==='Enter'&&ti.value.trim()){
+      const t=ti.value.trim().replace(/^#/,'');
+      if(!p.tags.includes(t)){p.tags.push(t);upd();openDrawer(p.id);setTimeout(()=>$('tag-in').focus(),80);}
+      ti.value='';
+    }
+  };
+  document.querySelectorAll('#drawer [data-rmtag]').forEach(b=>{
+    b.onclick=()=>{p.tags=p.tags.filter(t=>t!==b.dataset.rmtag);upd();openDrawer(p.id);};
+  });
+}
+function refreshScore(p){
+  const sc=scoreOf(p);
+  $('dr-total').textContent=sc==null?'—':sc.toFixed(1);
+  $('dr-sc').textContent=sc==null?T('未评分','Unscored'):T('综合 ','Score ')+sc.toFixed(1)+'/10';
+}
+function closeDrawer(){drawerId=null;$('ov').classList.remove('on');$('drawer').classList.remove('on');renderAll();}
+function delPerson(id){
+  const p=person(id);
+  if(!confirm(T(`删除「${p&&p.name||'未命名'}」？此操作不可撤销。`,`Delete "${p&&p.name||'unnamed'}"? This cannot be undone.`)))return;
+  data.people=data.people.filter(x=>x.id!==id);
+  markDirty();closeDrawer();
+}
+
+/* ============ 设置：每类维度编辑（名称 / 权重 / 增删） ============ */
+function openSettings(){
+  const rows=cat=>dimsOf(cat).map((d,i)=>`
+    <div class="dim-edit">
+      <input value="${esc(d.name)}" data-dname="${cat}:${i}" placeholder="${T('维度名','Dimension')}">
+      <input type="number" step="0.5" min="0.5" value="${d.weight}" data-dw="${cat}:${i}" title="${T('权重','Weight')}">
+      <span class="del" data-ddel="${cat}:${i}">✕</span>
+    </div>`).join('');
+  $('set-body').innerHTML=`
+    <div class="hint" style="font-family:var(--mono);font-size:11px;color:var(--ink2);line-height:1.7;margin-bottom:6px">
+      ${T('每类人有独立的打分维度（名称、权重均可改，可增删）。改名/调权重会即时作用于所有已打分的人；删除维度不会删数据，重加同名维度也不会找回旧分。','Each category has its own dimensions (rename / reweight / add / remove). Removing a dimension keeps people data intact.')}
+    </div>
+    ${CAT_KEYS.map(cat=>`
+      <div class="acc-h"><span class="seal" style="background:${CATS[cat].color}"></span>${esc(catLabel(cat))}</div>
+      <div id="dims-${cat}">${rows(cat)}</div>
+      <button class="iconbtn" data-dadd="${cat}" style="margin-top:2px">＋ ${T('加维度','Add dimension')}</button>
+    `).join('')}
+    <div class="privnote">${T('🔒 隐私：本库数据只写入你的私有仓库 Database/people.json；应用本身没有任何「公开展示」或导出到公开仓库的功能。令牌与全家应用共享（pha-config），只存本机浏览器。','🔒 Privacy: data is written only to your private repo (Database/people.json). This app has no public-showcase or public-repo export feature. Token shared via pha-config, stored in this browser only.')}</div>`;
+  $('set-ov').classList.add('on');
+  bindSettings();
+}
+function bindSettings(){
+  document.querySelectorAll('[data-dname]').forEach(inp=>{
+    inp.oninput=()=>{const[cat,i]=inp.dataset.dname.split(':');data.dims[cat][+i].name=inp.value;markDirty();};
+    inp.onblur=()=>renderAll();
+  });
+  document.querySelectorAll('[data-dw]').forEach(inp=>{
+    inp.onchange=()=>{const[cat,i]=inp.dataset.dw.split(':');data.dims[cat][+i].weight=Math.max(0.5,+inp.value||1);markDirty();renderAll();};
+  });
+  document.querySelectorAll('[data-ddel]').forEach(b=>{
+    b.onclick=()=>{
+      const[cat,i]=b.dataset.ddel.split(':');
+      const d=data.dims[cat][+i];
+      if(!confirm(T(`删除维度「${d.name}」？已打的分会保留在数据里但不再计入综合分。`,`Remove dimension "${d.name}"? Existing scores stay in data but stop counting.`)))return;
+      data.dims[cat].splice(+i,1);markDirty();renderAll();openSettings();
+    };
+  });
+  document.querySelectorAll('[data-dadd]').forEach(b=>{
+    b.onclick=()=>{const cat=b.dataset.dadd;data.dims[cat].push({id:uid(),name:T('新维度','New'),weight:1});markDirty();renderAll();openSettings();};
+  });
+}
+function closeSettings(){$('set-ov').classList.remove('on');renderAll();}
+function exportBackup(){
+  const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download='people-backup-'+new Date().toISOString().slice(0,10)+'.json';a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+  toast(T('已导出本地备份（含全部数据，请自行妥善保管）','Backup downloaded — keep it safe'));
+}
+
+/* ============ 事件 & 启动 ============ */
+$('search').addEventListener('input',e=>{ui.search=e.target.value;renderGrid();});
+$('sortsel').addEventListener('change',e=>{ui.sort=e.target.value;renderGrid();});
+$('set-ov').addEventListener('click',e=>{if(e.target.id==='set-ov')closeSettings();});
+window.addEventListener('beforeunload',e=>{if(dirty||saving){ghPush(true);e.preventDefault();e.returnValue='';}});
+
+(function init(){
+  loadCfg();
+  loadCache();       // 本地缓存秒开
+  applyStatic();
+  renderAll();
+  if(configured()){setSync('ok',T('已连接','Connected'));ghPull();}
+  else setSync('idle',T('未配置 — 从导航站进入自动共享令牌','Not set — open via the portal to share the token'));
+})();
+</script>
+</body>
+</html>
