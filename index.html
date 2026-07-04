@@ -66,6 +66,25 @@ select.ctl{background:var(--card);border:1px solid var(--line2);border-radius:8p
 .pill{border:1px solid var(--line);border-radius:5px;padding:1px 7px;background:var(--paper2);white-space:nowrap}
 .pcard .snip{margin-top:8px;font-size:12.5px;color:var(--ink2);display:-webkit-box;-webkit-line-clamp:2;line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .pcard .foot{margin-top:8px;font-family:var(--mono);font-size:10.5px;color:var(--ink3);display:flex;gap:10px}
+.viewseg{display:inline-flex;border:1px solid var(--line2);border-radius:8px;overflow:hidden}
+.viewseg .seg{background:var(--card);border:none;color:var(--ink2);font-family:var(--sans);font-size:13px;padding:8px 12px;cursor:pointer}
+.viewseg .seg.on{background:var(--ink);color:var(--paper)}
+.viewseg .seg+.seg{border-left:1px solid var(--line2)}
+.rankcard{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px 14px;border-top:3px solid var(--acc)}
+.rank-h{font-family:var(--serif);font-size:16px;font-weight:700;display:flex;align-items:baseline;gap:8px;margin-bottom:8px}
+.rank-h small{font-family:var(--mono);font-size:10px;color:var(--ink3);font-weight:400}
+.rank-h .rc{margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink3);border:1px solid var(--line);border-radius:10px;padding:0 7px}
+.rlist{list-style:none;margin:0;padding:0}
+.rrow{display:grid;grid-template-columns:26px 1fr 60px 34px;align-items:center;gap:8px;padding:5px 0;cursor:pointer;border-bottom:1px dashed var(--line)}
+.rrow:last-child{border-bottom:none}
+.rrow:hover .rn{color:var(--acc)}
+.rrow .rk{font-size:15px;text-align:center}
+.rrow .rk .ri{font-family:var(--mono);font-size:12px;color:var(--ink3)}
+.rrow .rn{font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rrow .rbar{height:6px;background:var(--paper2);border-radius:4px;overflow:hidden;border:1px solid var(--line)}
+.rrow .rbar i{display:block;height:100%;background:var(--acc);opacity:.75}
+.rrow .rs{font-family:var(--mono);font-size:13px;text-align:right;color:var(--acc)}
+.rempty{color:var(--ink3);font-size:12.5px;padding:6px 0;font-family:var(--mono)}
 .empty{grid-column:1/-1;text-align:center;color:var(--ink3);padding:60px 20px;font-family:var(--serif);font-size:15px;line-height:2.2}
 .empty .big{font-size:34px}
 
@@ -152,6 +171,10 @@ footer{border-top:1px solid var(--line);padding:16px 0 28px;text-align:center;co
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
       <input id="search" data-i18n-ph="searchPh" placeholder="搜索姓名 / 标签 / 来源 / 侧写 / 备注…">
     </div>
+    <div class="viewseg" id="viewseg">
+      <button class="seg${''}" data-view="list" onclick="setView('list')" data-i18n="v_list">☰ 名录</button>
+      <button class="seg" data-view="rank" onclick="setView('rank')" data-i18n="v_rank">🏆 排行榜</button>
+    </div>
     <select class="ctl" id="sortsel">
       <option value="score" data-i18n="s_score">按综合分</option>
       <option value="updated" data-i18n="s_updated">按最近更新</option>
@@ -184,7 +207,7 @@ footer{border-top:1px solid var(--line);padding:16px 0 28px;text-align:center;co
 
 <script>
 /* =====================================================================
-   人力资源（People Atlas）：量化朋友 / 工作人脉 / 创业人脉 三类分开管理。
+   人力资源（People Atlas）：朋友 / 工作人脉 / 创业人脉 三类分开管理。
    - 每类有独立、可编辑的打分维度（名称+权重），综合分 = 已评维度的加权平均（0-10）
    - 人的字段全部可选：联系方式 / 来源 / 人物侧写 / 备注 / 标签 / 上次联系
    - 数据存私有仓库 Database/people.json（pha-config 共享令牌），本地缓存秒开
@@ -195,7 +218,7 @@ const DATA_PATH='people.json';
 const CACHE_KEY='people_cache_v1';
 
 const CATS={
-  friends:{label:'量化朋友', labelEn:'Friends',  color:'var(--friend)', noun:'朋友', nounEn:'friend'},
+  friends:{label:'朋友', labelEn:'Friends',  color:'var(--friend)', noun:'朋友', nounEn:'friend'},
   work:   {label:'工作人脉', labelEn:'Work',     color:'var(--work)',   noun:'人脉', nounEn:'contact'},
   venture:{label:'创业人脉', labelEn:'Venture',  color:'var(--venture)',noun:'人脉', nounEn:'contact'},
 };
@@ -223,7 +246,7 @@ function defaultData(){ return {version:1, updatedAt:null, dims:defaultDims(), p
 let cfg={owner:'NickkkLian',repo:'Database',token:''};
 let data=defaultData();
 let fileSha=null, saveTimer=null, saving=false, dirty=false;
-let ui={cat:'friends', search:'', sort:'score'};
+let ui={cat:'friends', search:'', sort:'score', view:'list'};  // view: list 名录 | rank 排行榜
 let drawerId=null;
 
 /* ============ 双语（pha-lang 共享） ============ */
@@ -239,6 +262,7 @@ const I18N={
   s_score:{zh:'按综合分',en:'By score'}, s_updated:{zh:'按最近更新',en:'By updated'},
   s_last:{zh:'按上次联系',en:'By last contact'}, s_name:{zh:'按姓名',en:'By name'},
   addBtn:{zh:'添加',en:'Add'},
+  v_list:{zh:'☰ 名录',en:'☰ List'}, v_rank:{zh:'🏆 排行榜',en:'🏆 Ranking'},
   setTitle:{zh:'⚙ 设置',en:'⚙ Settings'},
   exportBtn:{zh:'⬇ 导出备份',en:'⬇ Backup'}, doneBtn:{zh:'完成',en:'Done'},
   foot:{zh:'纯私人名录 · 数据只存私有仓库 · 本库无任何公开展示/导出到公开仓库的功能',en:'Private ledger · data lives only in your private repo · this app has no public-showcase/export feature'},
@@ -358,12 +382,13 @@ function filtered(){
   return list;
 }
 function renderGrid(){
+  if(ui.view==='rank'){renderRank();return;}
   const list=filtered();const c=CATS[ui.cat];
   if(!list.length){
     $('grid').innerHTML=`<div class="empty"><div class="big">☰</div>${
       data.people.filter(p=>p.cat===ui.cat).length
         ? T('没有匹配的结果','No matches')
-        : T(`还没有${c.label.slice(-2)==='朋友'?'朋友':'人脉'}。点右上「＋ 添加」建第一张人物卡。`,'Empty — click “+ Add” to create the first card.')
+        : T(`还没有${c.noun}。点右上「＋ 添加」建第一张人物卡。`,'Empty — click “+ Add” to create the first card.')
     }</div>`;
     return;
   }
@@ -380,6 +405,42 @@ function renderGrid(){
       <div class="foot"><span>${T('更新','upd')} ${(p.updatedAt||'').slice(0,10)}</span>${p.lastContact?`<span>${T('联系','met')} ${esc(p.lastContact)}</span>`:''}</div>
     </div>`;
   }).join('');
+}
+
+/* ============ 各维度单项排行榜 ============ */
+function setView(v){
+  ui.view=v;
+  document.querySelectorAll('#viewseg .seg').forEach(b=>b.classList.toggle('on',b.dataset.view===v));
+  document.getElementById('sortsel').style.display = v==='rank'?'none':'';   // 排行榜模式排序无意义
+  renderGrid();
+}
+function catPool(){
+  let list=data.people.filter(p=>p.cat===ui.cat);
+  const q=ui.search.trim().toLowerCase();
+  if(q)list=list.filter(p=>[p.name,p.source,p.profile,p.notes,p.contact,(p.tags||[]).join(' ')].join(' ').toLowerCase().includes(q));
+  return list;
+}
+function renderRank(){
+  const dims=dimsOf(ui.cat), pool=catPool(), c=CATS[ui.cat];
+  if(!dims.length){$('grid').innerHTML=`<div class="empty"><div class="big">🏆</div>${T('这个分类还没有维度，去 ⚙ 设置里添加。','No dimensions yet — add some in ⚙ Settings.')}</div>`;return;}
+  const medal=i=>['🥇','🥈','🥉'][i]||`<span class="ri">${i+1}</span>`;
+  const blocks=dims.map(d=>{
+    const ranked=pool.filter(p=>typeof p.scores[d.id]==='number')
+      .sort((a,b)=>b.scores[d.id]-a.scores[d.id] || (a.name||'').localeCompare(b.name||'','zh'));
+    const rows=ranked.length? ranked.map((p,i)=>`
+      <li class="rrow" onclick="openDrawer('${p.id}')">
+        <span class="rk">${medal(i)}</span>
+        <span class="rn">${esc(p.name||T('未命名','Unnamed'))}</span>
+        <span class="rbar"><i style="width:${p.scores[d.id]*10}%"></i></span>
+        <span class="rs">${p.scores[d.id]}</span>
+      </li>`).join('')
+      : `<li class="rempty">${T('还没人评这个维度','No one scored on this yet')}</li>`;
+    return `<div class="rankcard" style="--acc:${c.color}">
+      <div class="rank-h">${esc(d.name)} <small>×${d.weight}</small><span class="rc">${ranked.length}</span></div>
+      <ol class="rlist">${rows}</ol>
+    </div>`;
+  }).join('');
+  $('grid').innerHTML=blocks;
 }
 
 /* ============ 抽屉编辑 ============ */
@@ -556,6 +617,7 @@ window.addEventListener('beforeunload',e=>{if(dirty||saving){ghPush(true);e.prev
   loadCache();       // 本地缓存秒开
   applyStatic();
   renderAll();
+  setView(ui.view);
   if(configured()){setSync('ok',T('已连接','Connected'));ghPull();}
   else setSync('idle',T('未配置 — 从导航站进入自动共享令牌','Not set — open via the portal to share the token'));
 })();
