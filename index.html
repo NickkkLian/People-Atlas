@@ -64,6 +64,8 @@ select.ctl{background:var(--card);border:1px solid var(--line2);border-radius:8p
 .pcard .score small{font-size:10px;color:var(--ink3)}
 .pcard .meta{margin-top:6px;display:flex;gap:5px;flex-wrap:wrap;font-size:11px;color:var(--ink2)}
 .pill{border:1px solid var(--line);border-radius:5px;padding:1px 7px;background:var(--paper2);white-space:nowrap}
+.pill.bday{border-color:#d8a24e;color:#9c6f27;background:rgba(162,118,44,.10);font-weight:500}
+.pill.bday.today{border-color:var(--friend);color:var(--friend);background:rgba(180,82,75,.10)}
 .pcard .snip{margin-top:8px;font-size:12.5px;color:var(--ink2);display:-webkit-box;-webkit-line-clamp:2;line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .pcard .foot{margin-top:8px;font-family:var(--mono);font-size:10.5px;color:var(--ink3);display:flex;gap:10px}
 .viewseg{display:inline-flex;border:1px solid var(--line2);border-radius:8px;overflow:hidden}
@@ -305,7 +307,7 @@ function normalize(d){
     name:String(p.name||''), scores:(p.scores&&typeof p.scores==='object')?p.scores:{},
     contact:p.contact||'', source:p.source||'', profile:p.profile||'', notes:p.notes||'',
     tags:Array.isArray(p.tags)?p.tags.filter(t=>typeof t==='string'):[],
-    lastContact:p.lastContact||'',
+    lastContact:p.lastContact||'', birthday:typeof p.birthday==='string'?p.birthday:'',
     createdAt:p.createdAt||new Date().toISOString(), updatedAt:p.updatedAt||new Date().toISOString(),
   }));
   return {version:1, updatedAt:d.updatedAt||null, dims, people};
@@ -360,6 +362,33 @@ function scoreOf(p){
   return Math.round(acc/sw*10)/10;
 }
 
+/* ============ 生日：解析 MM-DD 或 YYYY-MM-DD（年份可选），算下一次生日倒计时 ============ */
+function parseBday(s){
+  s=(s||'').trim(); if(!s)return null;
+  let m=s.match(/^(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})$/), year=null,mon,day;
+  if(m){year=+m[1];mon=+m[2];day=+m[3];}
+  else{ m=s.match(/^(\d{1,2})[-/.](\d{1,2})$/); if(!m)return null; mon=+m[1];day=+m[2]; }
+  if(mon<1||mon>12||day<1||day>31)return null;
+  return {year,mon,day};
+}
+function bdayCanon(s){const b=parseBday(s);if(!b)return (s||'').trim();const mm=String(b.mon).padStart(2,'0'),dd=String(b.day).padStart(2,'0');return b.year?`${b.year}-${mm}-${dd}`:`${mm}-${dd}`;}
+function bdayInfo(s){
+  const b=parseBday(s); if(!b)return null;
+  const now=new Date(); now.setHours(0,0,0,0);
+  let next=new Date(now.getFullYear(),b.mon-1,b.day); next.setHours(0,0,0,0);
+  if(next<now) next=new Date(now.getFullYear()+1,b.mon-1,b.day);
+  const days=Math.round((next-now)/86400000);
+  return {days,age:b.year?next.getFullYear()-b.year:null,hasYear:b.year!=null};
+}
+function bdayHintText(s){
+  if(!(s||'').trim())return '';
+  const bi=bdayInfo(s);
+  if(!bi)return T('格式：MM-DD 或 YYYY-MM-DD','Format: MM-DD or YYYY-MM-DD');
+  const when=bi.days===0?T('🎂 就是今天！','🎂 today!'):T(`🎂 还有 ${bi.days} 天`,`🎂 in ${bi.days} day${bi.days>1?'s':''}`);
+  const age=bi.age!=null?T(`（将满 ${bi.age} 岁）`,` · turning ${bi.age}`):'';
+  return when+age;
+}
+
 /* ============ 渲染 ============ */
 function renderAll(){renderCats();renderGrid();}
 function renderCats(){
@@ -397,10 +426,12 @@ function renderGrid(){
     const tags=(p.tags||[]).slice(0,3).map(t=>`<span class="pill">#${esc(t)}</span>`).join('');
     const src=p.source?`<span class="pill">📍 ${esc(p.source.slice(0,14))}</span>`:'';
     const ct=p.contact?`<span class="pill">☎</span>`:'';
+    const bi=bdayInfo(p.birthday);
+    const bd=(bi&&bi.days<=14)?`<span class="pill bday${bi.days===0?' today':''}">🎂 ${bi.days===0?T('今天','today'):T(bi.days+'天',bi.days+'d')}</span>`:'';
     const snip=(p.profile||p.notes||'').trim();
     return `<div class="pcard" style="--acc:${CATS[p.cat].color}" onclick="openDrawer('${p.id}')">
       <div class="nm">${esc(p.name||T('未命名','Unnamed'))}<span class="score">${sc==null?`<small>${T('未评','—')}</small>`:sc.toFixed(1)+'<small>/10</small>'}</span></div>
-      <div class="meta">${src}${ct}${tags}</div>
+      <div class="meta">${bd}${src}${ct}${tags}</div>
       ${snip?`<div class="snip">${esc(snip)}</div>`:''}
       <div class="foot"><span>${T('更新','upd')} ${(p.updatedAt||'').slice(0,10)}</span>${p.lastContact?`<span>${T('联系','met')} ${esc(p.lastContact)}</span>`:''}</div>
     </div>`;
@@ -445,7 +476,7 @@ function renderRank(){
 
 /* ============ 抽屉编辑 ============ */
 function addPerson(){
-  const p={id:uid(),cat:ui.cat,name:'',scores:{},contact:'',source:'',profile:'',notes:'',tags:[],lastContact:'',
+  const p={id:uid(),cat:ui.cat,name:'',scores:{},contact:'',source:'',profile:'',notes:'',tags:[],lastContact:'',birthday:'',
     createdAt:new Date().toISOString(),updatedAt:new Date().toISOString()};
   data.people.unshift(p);markDirty();renderAll();openDrawer(p.id,true);
 }
@@ -474,11 +505,14 @@ function openDrawer(id,isNew){
   </div>
   <div class="dr-body" style="--acc:${c.color}">
     <div class="field"><input class="name-in" id="p-name" placeholder="${T('姓名 / 称呼…','Name…')}" value="${esc(p.name)}"></div>
+    <div class="field"><label>${T('分类','Category')}</label>
+      <select class="ctl" id="p-cat" style="width:100%">${catOpts}</select></div>
     <div class="two">
-      <div class="field"><label>${T('分类','Category')}</label>
-        <select class="ctl" id="p-cat" style="width:100%">${catOpts}</select></div>
       <div class="field"><label>${T('上次联系（选填）','Last contact (optional)')}</label>
         <input type="date" id="p-last" value="${esc(p.lastContact)}"></div>
+      <div class="field"><label>${T('生日（选填）','Birthday (optional)')}</label>
+        <input id="p-birthday" placeholder="${T('MM-DD 或 YYYY-MM-DD','MM-DD or YYYY-MM-DD')}" value="${esc(p.birthday)}">
+        <div class="hint" id="p-bday-hint"></div></div>
     </div>
     <div class="dims">
       <h4>${T('打分','SCORES')} <span style="color:var(--ink3);margin-left:8px">${T('（未拖过=未评，不计入综合分）','(untouched = unscored)')}</span><span class="total" id="dr-total">${sc==null?'—':sc.toFixed(1)}</span></h4>
@@ -509,6 +543,11 @@ function bindDrawer(p){
   $('p-name').oninput=e=>{p.name=e.target.value;upd();};
   $('p-cat').onchange=e=>{p.cat=e.target.value;upd();openDrawer(p.id);renderAll();};
   $('p-last').onchange=e=>{p.lastContact=e.target.value;upd();};
+  const bday=$('p-birthday'), bhint=$('p-bday-hint');
+  const showBhint=()=>{bhint.textContent=bdayHintText(bday.value);};
+  bday.oninput=e=>{p.birthday=e.target.value;showBhint();upd();};
+  bday.onblur=()=>{const c=bdayCanon(bday.value);if(c!==bday.value){bday.value=c;p.birthday=c;showBhint();markDirty();}};
+  showBhint();
   $('p-contact').oninput=e=>{p.contact=e.target.value;upd();};
   $('p-source').oninput=e=>{p.source=e.target.value;upd();};
   $('p-profile').oninput=e=>{p.profile=e.target.value;upd();};
