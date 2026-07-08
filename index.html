@@ -148,6 +148,36 @@ footer{border-top:1px solid var(--line);padding:16px 0 28px;text-align:center;co
 .toast.show{transform:translateX(-50%) translateY(0)}
 .toast.err{background:var(--red)}
 @media(max-width:640px){.cat-tab{padding:10px 10px;font-size:14px}.grid{grid-template-columns:1fr}}
+
+/* 深读档案 & AI 蒸馏 */
+.modal.wide{max-width:840px}
+.dsec{margin-bottom:20px}
+.dsec-h{font-family:var(--serif);font-size:15.5px;font-weight:700;display:flex;align-items:center;gap:8px;margin:0 0 9px}
+.dsec-h .cnt{font-family:var(--mono);font-size:10.5px;color:var(--ink3);border:1px solid var(--line);border-radius:10px;padding:0 7px}
+.dsec-h .add{margin-left:auto}
+.asp{margin-bottom:11px}
+.asp .al{display:flex;align-items:center;gap:6px;margin-bottom:3px}
+.asp .al input{flex:1;background:none;border:none;font-family:var(--mono);font-size:10.5px;letter-spacing:.6px;color:var(--ink2);text-transform:uppercase;padding:2px 0}
+.asp .al input:focus{outline:none;color:var(--ink)}
+.asp .al .del{color:var(--ink3);cursor:pointer;font-size:12px;visibility:hidden}
+.asp:hover .al .del{visibility:visible}
+.asp textarea{width:100%;background:var(--card);border:1px solid var(--line2);border-radius:8px;padding:8px 10px;font-size:13.5px;color:var(--ink);font-family:var(--sans);resize:vertical;min-height:52px;line-height:1.65}
+.asp textarea:focus{outline:none;border-color:var(--ink3)}
+.dcard{background:var(--card);border:1px solid var(--line);border-radius:9px;padding:10px 12px;margin-bottom:9px;position:relative}
+.dcard .dtop{display:flex;gap:8px;align-items:center;margin-bottom:5px}
+.dcard .dtop input.topic{flex:1;background:none;border:none;font-family:var(--serif);font-size:14.5px;font-weight:700;color:var(--ink);padding:2px 0}
+.dcard .dtop input.dt{width:110px;background:none;border:none;font-family:var(--mono);font-size:11px;color:var(--ink3);text-align:right}
+.dcard input:focus,.dcard textarea:focus{outline:none}
+.dcard textarea{width:100%;background:none;border:none;border-top:1px dashed var(--line);padding:6px 0 0;font-size:13.5px;color:var(--ink2);font-family:var(--sans);resize:vertical;min-height:40px;line-height:1.65}
+.dcard textarea.quote{border-top:none;background:var(--paper2);border-left:2px solid var(--acc,var(--line2));border-radius:0 6px 6px 0;padding:5px 9px;margin-top:6px;font-size:13px;color:var(--ink);font-family:var(--serif);font-style:italic;min-height:32px}
+.dcard textarea.qtext{border-top:none;background:var(--paper2);border-left:3px solid var(--friend);border-radius:0 6px 6px 0;padding:7px 10px;font-family:var(--serif);font-size:14px;color:var(--ink);min-height:40px;line-height:1.7}
+.dcard .del{position:absolute;top:8px;right:9px;color:var(--ink3);cursor:pointer;font-size:12px;visibility:hidden;z-index:2}
+.dcard:hover .del{visibility:visible}
+.dempty{color:var(--ink3);font-size:12.5px;font-family:var(--mono);padding:2px 0 8px}
+.distill-ta{width:100%;min-height:190px;background:var(--card);border:1px solid var(--line2);border-radius:8px;padding:10px 12px;font-size:13px;color:var(--ink);font-family:var(--sans);line-height:1.6;resize:vertical}
+.distill-ta:focus{outline:none;border-color:var(--ink3)}
+.dres{border:1px solid var(--line);border-radius:9px;padding:10px 13px;margin-top:12px;background:var(--card);max-height:320px;overflow-y:auto}
+.dres .rl{font-size:12.5px;color:var(--ink2);margin:2px 0 9px;line-height:1.6}
 </style>
 </head>
 <body>
@@ -201,6 +231,34 @@ footer{border-top:1px solid var(--line);padding:16px 0 28px;text-align:center;co
       <button class="btn ghost" onclick="exportBackup()" data-i18n="exportBtn">⬇ 导出备份</button>
       <button class="btn" onclick="closeSettings()" data-i18n="doneBtn">完成</button>
     </div>
+  </div>
+</div>
+
+<!-- 深读档案 -->
+<div class="modal-ov" id="dossier-ov">
+  <div class="modal wide">
+    <h3>📖 <span data-i18n="dossierTitle">深读</span> · <span id="dossier-name" style="font-family:var(--serif)"></span>
+      <button class="iconbtn" style="margin-left:12px" onclick="openDistill()">🧪 <span data-i18n="distillBtn">从聊天记录蒸馏</span></button>
+      <span class="x" onclick="closeDossier()">✕</span></h3>
+    <div class="mb" id="dossier-body" style="max-height:70vh;overflow-y:auto"></div>
+    <div class="mf">
+      <span class="privnote" style="flex:1;margin:0;border:none;padding:0" data-i18n="dossierPriv">🔒 纯私有 · 只存你的私有仓库 · 绝无公开导出</span>
+      <button class="btn" onclick="closeDossier()" data-i18n="doneBtn">完成</button></div>
+  </div>
+</div>
+<!-- 蒸馏聊天记录 -->
+<div class="modal-ov" id="distill-ov">
+  <div class="modal">
+    <h3>🧪 <span data-i18n="distillTitle">从聊天记录蒸馏</span><span class="x" onclick="closeDistill()">✕</span></h3>
+    <div class="mb">
+      <div class="hint" style="margin-bottom:9px;line-height:1.7" data-i18n="distillHint"></div>
+      <textarea class="distill-ta" id="distill-in"></textarea>
+      <div class="hint" id="distill-err" style="color:var(--red);margin-top:6px"></div>
+      <div class="dres" id="distill-res" style="display:none"></div>
+    </div>
+    <div class="mf">
+      <button class="btn ghost" onclick="closeDistill()" data-i18n="closeBtn">关闭</button>
+      <button class="btn" id="distill-run" onclick="runDistill()">🧪 <span data-i18n="distillGo">蒸馏</span></button></div>
   </div>
 </div>
 
@@ -266,7 +324,11 @@ const I18N={
   addBtn:{zh:'添加',en:'Add'},
   v_list:{zh:'☰ 名录',en:'☰ List'}, v_rank:{zh:'🏆 排行榜',en:'🏆 Ranking'},
   setTitle:{zh:'⚙ 设置',en:'⚙ Settings'},
-  exportBtn:{zh:'⬇ 导出备份',en:'⬇ Backup'}, doneBtn:{zh:'完成',en:'Done'},
+  exportBtn:{zh:'⬇ 导出备份',en:'⬇ Backup'}, doneBtn:{zh:'完成',en:'Done'}, closeBtn:{zh:'关闭',en:'Close'},
+  dossierTitle:{zh:'深读',en:'Deep read'}, distillBtn:{zh:'从聊天记录蒸馏',en:'Distill from chat'},
+  distillTitle:{zh:'从聊天记录蒸馏',en:'Distill from chat'}, distillGo:{zh:'蒸馏',en:'Distill'},
+  distillHint:{zh:'粘贴你和 TA 的聊天记录（越多越准）。AI 会提炼「性格 / 说话方式 / 观念」、你们探讨的精华、值得留存的金句原话，供你审阅后采纳。内容仅用于本次请求，浏览器直连 Anthropic、不经第三方。',en:'Paste your chat log (more = better). The AI distills personality/speech/values, discussion essence, and verbatim quotes for you to review & merge. Sent directly to Anthropic from your browser, nowhere else.'},
+  dossierPriv:{zh:'🔒 纯私有 · 只存你的私有仓库 · 绝无公开导出',en:'🔒 Private · your private repo only · never exported'},
   foot:{zh:'纯私人名录 · 数据只存私有仓库 · 本库无任何公开展示/导出到公开仓库的功能',en:'Private ledger · data lives only in your private repo · this app has no public-showcase/export feature'},
   langBtn:{zh:'EN',en:'中'},
 };
@@ -308,6 +370,9 @@ function normalize(d){
     contact:p.contact||'', source:p.source||'', profile:p.profile||'', notes:p.notes||'',
     tags:Array.isArray(p.tags)?p.tags.filter(t=>typeof t==='string'):[],
     lastContact:p.lastContact||'', birthday:typeof p.birthday==='string'?p.birthday:'',
+    character:Array.isArray(p.character)?p.character.filter(x=>x&&typeof x==='object').map(x=>({id:x.id||uid(),label:String(x.label||''),text:String(x.text||'')})):[],
+    essence:Array.isArray(p.essence)?p.essence.filter(x=>x&&typeof x==='object').map(x=>({id:x.id||uid(),topic:String(x.topic||''),text:String(x.text||''),quote:String(x.quote||''),date:String(x.date||''),createdAt:x.createdAt||new Date().toISOString()})):[],
+    quotes:Array.isArray(p.quotes)?p.quotes.filter(x=>x&&typeof x==='object').map(x=>({id:x.id||uid(),text:String(x.text||''),context:String(x.context||''),date:String(x.date||''),createdAt:x.createdAt||new Date().toISOString()})):[],
     createdAt:p.createdAt||new Date().toISOString(), updatedAt:p.updatedAt||new Date().toISOString(),
   }));
   return {version:1, updatedAt:d.updatedAt||null, dims, people};
@@ -428,10 +493,12 @@ function renderGrid(){
     const ct=p.contact?`<span class="pill">☎</span>`:'';
     const bi=bdayInfo(p.birthday);
     const bd=(bi&&bi.days<=14)?`<span class="pill bday${bi.days===0?' today':''}">🎂 ${bi.days===0?T('今天','today'):T(bi.days+'天',bi.days+'d')}</span>`:'';
+    const hasDossier=((p.character||[]).some(a=>a.text&&a.text.trim()))||(p.essence||[]).length||(p.quotes||[]).length;
+    const dp=hasDossier?`<span class="pill" title="${T('已有深读档案','Has deep-read dossier')}">📖</span>`:'';
     const snip=(p.profile||p.notes||'').trim();
     return `<div class="pcard" style="--acc:${CATS[p.cat].color}" onclick="openDrawer('${p.id}')">
       <div class="nm">${esc(p.name||T('未命名','Unnamed'))}<span class="score">${sc==null?`<small>${T('未评','—')}</small>`:sc.toFixed(1)+'<small>/10</small>'}</span></div>
-      <div class="meta">${bd}${src}${ct}${tags}</div>
+      <div class="meta">${bd}${dp}${src}${ct}${tags}</div>
       ${snip?`<div class="snip">${esc(snip)}</div>`:''}
       <div class="foot"><span>${T('更新','upd')} ${(p.updatedAt||'').slice(0,10)}</span>${p.lastContact?`<span>${T('联系','met')} ${esc(p.lastContact)}</span>`:''}</div>
     </div>`;
@@ -476,7 +543,7 @@ function renderRank(){
 
 /* ============ 抽屉编辑 ============ */
 function addPerson(){
-  const p={id:uid(),cat:ui.cat,name:'',scores:{},contact:'',source:'',profile:'',notes:'',tags:[],lastContact:'',birthday:'',
+  const p={id:uid(),cat:ui.cat,name:'',scores:{},contact:'',source:'',profile:'',notes:'',tags:[],lastContact:'',birthday:'',character:[],essence:[],quotes:[],
     createdAt:new Date().toISOString(),updatedAt:new Date().toISOString()};
   data.people.unshift(p);markDirty();renderAll();openDrawer(p.id,true);
 }
@@ -531,6 +598,7 @@ function openDrawer(id,isNew){
   </div>
   <div class="dr-foot">
     <button class="btn danger" onclick="delPerson('${p.id}')">${T('删除','Delete')}</button>
+    <button class="btn ghost" onclick="openDossier('${p.id}')">📖 ${T('深读','Deep read')}</button>
     <span style="flex:1"></span>
     <button class="btn" onclick="closeDrawer()">${T('完成','Done')}</button>
   </div>`;
@@ -612,6 +680,17 @@ function openSettings(){
       <div id="dims-${cat}">${rows(cat)}</div>
       <button class="iconbtn" data-dadd="${cat}" style="margin-top:2px">＋ ${T('加维度','Add dimension')}</button>
     `).join('')}
+    <div class="acc-h" style="margin-top:20px">🧪 ${T('AI 蒸馏（深读用）','AI distillation')}</div>
+    <div class="hint" style="line-height:1.7;margin-bottom:8px">${T('填入 Anthropic API Key，人物卡「📖 深读」里就能从聊天记录自动蒸馏性格/精华/金句。Key 只存本机浏览器、直连 Anthropic，按次计费。','Enter an Anthropic API key to enable chat distillation inside each person\'s Deep-read. Stored only in this browser; sent directly to Anthropic; pay-per-use.')}</div>
+    <div class="two">
+      <div class="field"><label>API KEY</label><input id="ai-key" type="password" placeholder="sk-ant-…"></div>
+      <div class="field"><label>${T('模型','Model')}</label><select class="ctl" id="ai-model" style="width:100%">
+        <option value="claude-opus-4-8">Opus 4.8（${T('最佳','best')}）</option>
+        <option value="claude-sonnet-5">Sonnet 5（${T('更省','cheaper')}）</option>
+      </select></div>
+    </div>
+    <button class="iconbtn" id="ai-save">💾 ${T('保存 Key','Save key')}</button>
+    <span id="ai-saved" style="font-family:var(--mono);font-size:11px;color:var(--green);margin-left:8px"></span>
     <div class="privnote">${T('🔒 隐私：本库数据只写入你的私有仓库 Database/people.json；应用本身没有任何「公开展示」或导出到公开仓库的功能。令牌与全家应用共享（pha-config），只存本机浏览器。','🔒 Privacy: data is written only to your private repo (Database/people.json). This app has no public-showcase or public-repo export feature. Token shared via pha-config, stored in this browser only.')}</div>`;
   $('set-ov').classList.add('on');
   bindSettings();
@@ -635,6 +714,12 @@ function bindSettings(){
   document.querySelectorAll('[data-dadd]').forEach(b=>{
     b.onclick=()=>{const cat=b.dataset.dadd;data.dims[cat].push({id:uid(),name:T('新维度','New'),weight:1});markDirty();renderAll();openSettings();};
   });
+  // AI 蒸馏配置
+  const ac=aiCfg(),ms=$('ai-model'),keyIn=$('ai-key');
+  if(ms)ms.value=ac.model;
+  if(keyIn&&ac.key)keyIn.placeholder='•••••••• '+T('（已保存，留空即不改）','(saved — leave blank to keep)');
+  const asv=$('ai-save');
+  if(asv)asv.onclick=()=>{const k=($('ai-key').value||'').trim()||ac.key;saveAiCfg(k,$('ai-model').value);$('ai-key').value='';$('ai-saved').textContent=T('已保存 ✓','Saved ✓');setTimeout(()=>{const el=$('ai-saved');if(el)el.textContent='';},2000);};
 }
 function closeSettings(){$('set-ov').classList.remove('on');renderAll();}
 function exportBackup(){
@@ -645,10 +730,138 @@ function exportBackup(){
   toast(T('已导出本地备份（含全部数据，请自行妥善保管）','Backup downloaded — keep it safe'));
 }
 
+/* ============ 深读档案：人物蒸馏 / 探讨精华 / 金句 + AI 蒸馏 ============ */
+const AI_CFG_KEY='people_ai_cfg';
+function aiCfg(){try{return Object.assign({key:'',model:'claude-opus-4-8'},JSON.parse(localStorage.getItem(AI_CFG_KEY)||'{}'));}catch(e){return{key:'',model:'claude-opus-4-8'};}}
+function saveAiCfg(key,model){try{localStorage.setItem(AI_CFG_KEY,JSON.stringify({key:(key||'').trim(),model:model||'claude-opus-4-8'}));}catch(e){}}
+const DOSSIER_DEFAULT_LABELS=['性格特质','说话方式','观念·价值观'];
+let dossierId=null, distillResult=null;
+function charAspects(p){
+  if(!Array.isArray(p.character)||!p.character.length) p.character=DOSSIER_DEFAULT_LABELS.map(l=>({id:uid(),label:l,text:''}));
+  return p.character;
+}
+function openDossier(id){const p=person(id);if(!p)return;dossierId=id;renderDossier();$('dossier-ov').classList.add('on');}
+function closeDossier(){$('dossier-ov').classList.remove('on');dossierId=null;renderAll();}
+function renderDossier(){
+  const p=person(dossierId);if(!p)return;const c=CATS[p.cat];
+  const aspects=charAspects(p);
+  const aspHtml=aspects.map((a,i)=>`
+    <div class="asp">
+      <div class="al"><input value="${esc(a.label)}" data-al="${i}" placeholder="${T('维度名','Aspect')}"><span class="del" data-adel="${i}" title="${T('删除此维度','Remove')}">✕</span></div>
+      <textarea data-at="${i}" placeholder="${T('这方面 TA 是怎样的…（可手写，或用右上「蒸馏」自动提取）','What they are like in this respect…')}">${esc(a.text)}</textarea>
+    </div>`).join('');
+  const essHtml=(p.essence||[]).length?p.essence.map((e,i)=>`
+    <div class="dcard" style="--acc:${c.color}">
+      <span class="del" data-edel="${i}">✕</span>
+      <div class="dtop"><input class="topic" value="${esc(e.topic)}" data-etopic="${i}" placeholder="${T('主题…','Topic…')}"><input class="dt" value="${esc(e.date||'')}" data-edate="${i}" placeholder="${T('日期','date')}"></div>
+      <textarea data-etext="${i}" placeholder="${T('这次探讨的精华提炼…','The essence of this exchange…')}">${esc(e.text)}</textarea>
+      <textarea class="quote" data-equote="${i}" placeholder="${T('一句最能代表的原话（选填）','A representative quote (optional)')}">${esc(e.quote||'')}</textarea>
+    </div>`).join(''):`<div class="dempty">${T('还没有探讨精华。手动加，或用「蒸馏」从聊天记录提取。','None yet — add one, or distill from chat.')}</div>`;
+  const quoteHtml=(p.quotes||[]).length?p.quotes.map((q,i)=>`
+    <div class="dcard">
+      <span class="del" data-qdel="${i}">✕</span>
+      <textarea class="qtext" data-qtext="${i}" placeholder="${T('逐字原话…','Verbatim quote…')}">${esc(q.text)}</textarea>
+      <div class="dtop" style="margin:6px 0 0"><input class="topic" style="font-family:var(--sans);font-size:12.5px;font-weight:400;color:var(--ink2)" value="${esc(q.context||'')}" data-qctx="${i}" placeholder="${T('情境（选填）','context (optional)')}"><input class="dt" value="${esc(q.date||'')}" data-qdate="${i}" placeholder="${T('日期','date')}"></div>
+    </div>`).join(''):`<div class="dempty">${T('还没有金句。','No quotes yet.')}</div>`;
+  $('dossier-body').innerHTML=`
+    <div class="dsec">
+      <div class="dsec-h">🧬 ${T('人物蒸馏','Character')}<span class="cnt">${aspects.length}</span><button class="iconbtn add" data-aadd>＋ ${T('维度','Aspect')}</button></div>${aspHtml}
+    </div>
+    <div class="dsec">
+      <div class="dsec-h">💬 ${T('探讨精华','Discussion essence')}<span class="cnt">${(p.essence||[]).length}</span><button class="iconbtn add" data-eadd>＋ ${T('一条','Add')}</button></div>${essHtml}
+    </div>
+    <div class="dsec">
+      <div class="dsec-h">❝ ${T('金句·原话','Verbatim quotes')}<span class="cnt">${(p.quotes||[]).length}</span><button class="iconbtn add" data-qadd>＋ ${T('一条','Add')}</button></div>${quoteHtml}
+    </div>`;
+  $('dossier-name').textContent=p.name||T('未命名','Unnamed');
+  bindDossier(p);
+}
+function bindDossier(p){
+  const upd=()=>{p.updatedAt=new Date().toISOString();markDirty();};
+  const q=sel=>document.querySelectorAll('#dossier-body '+sel);
+  q('[data-al]').forEach(inp=>inp.oninput=()=>{p.character[+inp.dataset.al].label=inp.value;upd();});
+  q('[data-at]').forEach(ta=>ta.oninput=()=>{p.character[+ta.dataset.at].text=ta.value;upd();});
+  q('[data-adel]').forEach(b=>b.onclick=()=>{p.character.splice(+b.dataset.adel,1);upd();renderDossier();});
+  q('[data-etopic]').forEach(inp=>inp.oninput=()=>{p.essence[+inp.dataset.etopic].topic=inp.value;upd();});
+  q('[data-etext]').forEach(ta=>ta.oninput=()=>{p.essence[+ta.dataset.etext].text=ta.value;upd();});
+  q('[data-equote]').forEach(ta=>ta.oninput=()=>{p.essence[+ta.dataset.equote].quote=ta.value;upd();});
+  q('[data-edate]').forEach(inp=>inp.oninput=()=>{p.essence[+inp.dataset.edate].date=inp.value;upd();});
+  q('[data-edel]').forEach(b=>b.onclick=()=>{p.essence.splice(+b.dataset.edel,1);upd();renderDossier();});
+  q('[data-qtext]').forEach(ta=>ta.oninput=()=>{p.quotes[+ta.dataset.qtext].text=ta.value;upd();});
+  q('[data-qctx]').forEach(inp=>inp.oninput=()=>{p.quotes[+inp.dataset.qctx].context=inp.value;upd();});
+  q('[data-qdate]').forEach(inp=>inp.oninput=()=>{p.quotes[+inp.dataset.qdate].date=inp.value;upd();});
+  q('[data-qdel]').forEach(b=>b.onclick=()=>{p.quotes.splice(+b.dataset.qdel,1);upd();renderDossier();});
+  const b1=$('dossier-body').querySelector('[data-aadd]');if(b1)b1.onclick=()=>{p.character.push({id:uid(),label:T('新维度','New'),text:''});upd();renderDossier();};
+  const b2=$('dossier-body').querySelector('[data-eadd]');if(b2)b2.onclick=()=>{p.essence.unshift({id:uid(),topic:'',text:'',quote:'',date:'',createdAt:new Date().toISOString()});upd();renderDossier();};
+  const b3=$('dossier-body').querySelector('[data-qadd]');if(b3)b3.onclick=()=>{p.quotes.unshift({id:uid(),text:'',context:'',date:'',createdAt:new Date().toISOString()});upd();renderDossier();};
+}
+/* ---- AI 蒸馏（浏览器直连 Anthropic，结构化 JSON 输出） ---- */
+function openDistill(){
+  if(!dossierId)return;distillResult=null;
+  $('distill-in').value='';$('distill-in').placeholder=T('例：\n我：……\nTA：……\n（直接粘贴微信/其它聊天导出，越多越准）','Paste your chat log here…');
+  $('distill-err').textContent='';const rb=$('distill-res');rb.style.display='none';rb.innerHTML='';
+  $('distill-ov').classList.add('on');setTimeout(()=>$('distill-in').focus(),100);
+}
+function closeDistill(){$('distill-ov').classList.remove('on');}
+const DISTILL_SCHEMA={type:'object',additionalProperties:false,properties:{
+  character:{type:'array',items:{type:'object',additionalProperties:false,properties:{label:{type:'string'},text:{type:'string'}},required:['label','text']}},
+  essence:{type:'array',items:{type:'object',additionalProperties:false,properties:{topic:{type:'string'},text:{type:'string'},quote:{type:'string'}},required:['topic','text','quote']}},
+  quotes:{type:'array',items:{type:'object',additionalProperties:false,properties:{text:{type:'string'},context:{type:'string'}},required:['text','context']}}
+},required:['character','essence','quotes']};
+async function runDistill(){
+  const p=person(dossierId);if(!p)return;
+  const cfg=aiCfg(),errEl=$('distill-err'),txt=($('distill-in').value||'').trim();
+  if(!cfg.key){errEl.textContent=T('请先在 ⚙ 设置里保存 Anthropic API Key','Save your Anthropic API key in ⚙ Settings first');return;}
+  if(txt.length<20){errEl.textContent=T('请先粘贴一段聊天记录','Paste some chat first');return;}
+  const btn=$('distill-run'),old=btn.innerHTML;btn.disabled=true;btn.textContent=T('🧪 蒸馏中…','🧪 Distilling…');errEl.textContent='';
+  const SYSTEM='你在帮我为一位朋友建立「深度档案」，用于纪念与未来的文学创作。下面是我和这位朋友的聊天记录。请蒸馏出三部分，以 JSON 返回：\n'+
+    '1) character：人物特质数组，每项 {label, text}。至少覆盖「性格特质」「说话方式」「观念·价值观」三个 label；可再补你发现的其它显著维度（如幽默感、处事方式、在意什么…）。text 用简体中文，具体、有细节、贴合聊天中的真实表现，避免空泛套话。\n'+
+    '2) essence：我们探讨过的、有思想或情感价值的交流，数组，每项 {topic 主题, text 精华提炼, quote 最能代表的一句原话（没有就空字符串）}。挑真正有价值的，别记流水账。\n'+
+    '3) quotes：值得逐字保留的金句/名场面原话，数组，每项 {text 逐字原话, context 简短情境（没有就空字符串）}。只挑有味道、有代表性的。\n'+
+    '只返回 JSON，不要任何解释文字。某部分确实没有就返回空数组。';
+  try{
+    const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'content-type':'application/json','x-api-key':cfg.key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      body:JSON.stringify({model:cfg.model||'claude-opus-4-8',max_tokens:8000,system:SYSTEM,messages:[{role:'user',content:txt.slice(0,120000)}],output_config:{format:{type:'json_schema',schema:DISTILL_SCHEMA}}})});
+    if(r.status===401)throw new Error(T('API Key 无效 (401)','Invalid API key (401)'));
+    if(r.status===429)throw new Error(T('频率限制 (429)，稍后再试','Rate limited (429)'));
+    if(!r.ok)throw new Error('HTTP '+r.status);
+    const j=await r.json();
+    if(j.stop_reason==='refusal')throw new Error(T('模型拒绝了该请求','The model refused'));
+    const tb=(j.content||[]).find(b=>b.type==='text');if(!tb)throw new Error(T('未返回内容','Empty response'));
+    let obj;try{obj=JSON.parse(tb.text);}catch(e){throw new Error(T('返回格式无法解析','Could not parse response'));}
+    distillResult={character:Array.isArray(obj.character)?obj.character:[],essence:Array.isArray(obj.essence)?obj.essence:[],quotes:Array.isArray(obj.quotes)?obj.quotes:[]};
+    renderDistillResult();
+  }catch(e){errEl.textContent=T('蒸馏失败：','Distill failed: ')+e.message;}
+  finally{btn.disabled=false;btn.innerHTML=old;}
+}
+function renderDistillResult(){
+  const d=distillResult,box=$('distill-res'),n=d.character.length+d.essence.length+d.quotes.length;
+  box.style.display='';
+  box.innerHTML=`<b style="font-family:var(--serif)">${T('蒸馏结果','Result')}</b> <span style="font-family:var(--mono);font-size:11px;color:var(--ink3)">${T('人物特质','traits')} ${d.character.length} · ${T('探讨精华','essence')} ${d.essence.length} · ${T('金句','quotes')} ${d.quotes.length}</span>
+    <div style="margin-top:8px">
+    ${d.character.map(a=>`<div class="rl"><b style="font-size:12px;font-family:var(--serif)">${esc(a.label)}</b><br>${esc(a.text)}</div>`).join('')}
+    ${d.essence.map(e=>`<div class="rl"><b style="font-size:12px;font-family:var(--serif)">💬 ${esc(e.topic)}</b><br>${esc(e.text)}${e.quote?`<br><i style="color:var(--ink3)">「${esc(e.quote)}」</i>`:''}</div>`).join('')}
+    ${d.quotes.map(q=>`<div class="rl">❝ ${esc(q.text)}${q.context?` <span style="color:var(--ink3)">— ${esc(q.context)}</span>`:''}</div>`).join('')}
+    </div>
+    ${n?`<div style="margin-top:8px;text-align:right"><button class="btn" onclick="adoptDistill()">${T('采纳到档案 ↓','Merge into dossier ↓')}</button></div>`:`<div class="dempty">${T('没有提取到内容','Nothing extracted')}</div>`}`;
+}
+function adoptDistill(){
+  const p=person(dossierId),d=distillResult;if(!p||!d)return;
+  const asp=charAspects(p);
+  d.character.forEach(a=>{const ex=asp.find(x=>x.label===a.label);if(ex){ex.text=ex.text.trim()?ex.text.trim()+'\n\n'+(a.text||''):(a.text||'');}else asp.push({id:uid(),label:a.label||T('特质','Trait'),text:a.text||''});});
+  const now=new Date().toISOString();
+  d.essence.forEach(e=>p.essence.unshift({id:uid(),topic:e.topic||'',text:e.text||'',quote:e.quote||'',date:'',createdAt:now}));
+  d.quotes.forEach(q=>p.quotes.unshift({id:uid(),text:q.text||'',context:q.context||'',date:'',createdAt:now}));
+  p.updatedAt=now;markDirty();distillResult=null;closeDistill();renderDossier();
+  toast(T('已采纳到档案（可继续手动编辑）','Merged into dossier'));
+}
+
 /* ============ 事件 & 启动 ============ */
 $('search').addEventListener('input',e=>{ui.search=e.target.value;renderGrid();});
 $('sortsel').addEventListener('change',e=>{ui.sort=e.target.value;renderGrid();});
 $('set-ov').addEventListener('click',e=>{if(e.target.id==='set-ov')closeSettings();});
+$('dossier-ov').addEventListener('click',e=>{if(e.target.id==='dossier-ov')closeDossier();});
+$('distill-ov').addEventListener('click',e=>{if(e.target.id==='distill-ov')closeDistill();});
 window.addEventListener('beforeunload',e=>{if(dirty||saving){ghPush(true);e.preventDefault();e.returnValue='';}});
 
 (function init(){
