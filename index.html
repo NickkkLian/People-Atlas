@@ -243,6 +243,7 @@ footer{border-top:1px solid var(--line);padding:16px 0 28px;text-align:center;co
     <div class="mb" id="dossier-body" style="max-height:70vh;overflow-y:auto"></div>
     <div class="mf">
       <span class="privnote" style="flex:1;margin:0;border:none;padding:0" data-i18n="dossierPriv">🔒 纯私有 · 只存你的私有仓库 · 绝无公开导出</span>
+      <button class="btn ghost" onclick="exportPersonMd(dossierId)"><span data-i18n="exportMdBtn">⬇ 导出 Markdown</span></button>
       <button class="btn" onclick="closeDossier()" data-i18n="doneBtn">完成</button></div>
   </div>
 </div>
@@ -325,6 +326,7 @@ const I18N={
   v_list:{zh:'☰ 名录',en:'☰ List'}, v_rank:{zh:'🏆 排行榜',en:'🏆 Ranking'},
   setTitle:{zh:'⚙ 设置',en:'⚙ Settings'},
   exportBtn:{zh:'⬇ 导出备份',en:'⬇ Backup'}, doneBtn:{zh:'完成',en:'Done'}, closeBtn:{zh:'关闭',en:'Close'},
+  exportMdBtn:{zh:'⬇ 导出 Markdown',en:'⬇ Export Markdown'},
   dossierTitle:{zh:'深读',en:'Deep read'}, distillBtn:{zh:'从聊天记录蒸馏',en:'Distill from chat'},
   distillTitle:{zh:'从聊天记录蒸馏',en:'Distill from chat'}, distillGo:{zh:'蒸馏',en:'Distill'},
   distillHint:{zh:'粘贴你和 TA 的聊天记录（越多越准）。AI 会提炼「性格 / 说话方式 / 观念」、你们探讨的精华、值得留存的金句原话，供你审阅后采纳。内容仅用于本次请求，浏览器直连 Anthropic、不经第三方。',en:'Paste your chat log (more = better). The AI distills personality/speech/values, discussion essence, and verbatim quotes for you to review & merge. Sent directly to Anthropic from your browser, nowhere else.'},
@@ -854,6 +856,40 @@ function adoptDistill(){
   d.quotes.forEach(q=>p.quotes.unshift({id:uid(),text:q.text||'',context:q.context||'',date:'',createdAt:now}));
   p.updatedAt=now;markDirty();distillResult=null;closeDistill();renderDossier();
   toast(T('已采纳到档案（可继续手动编辑）','Merged into dossier'));
+}
+/* ---- 导出单人档案为 Markdown（拿去写作用） ---- */
+function personMd(p){
+  const L=[], nm=p.name||T('未命名','Unnamed'), sc=scoreOf(p);
+  L.push('# '+nm);
+  const head=[catLabel(p.cat)];
+  if(sc!=null)head.push(T('综合','Score')+' '+sc.toFixed(1)+'/10');
+  if(p.birthday)head.push(T('生日','Birthday')+' '+p.birthday);
+  if(p.lastContact)head.push(T('上次联系','Last contact')+' '+p.lastContact);
+  L.push('','> '+head.join(' · '));
+  if(p.source)L.push('','**'+T('来源','Source')+'**：'+p.source);
+  if(p.contact)L.push('','**'+T('联系方式','Contact')+'**：'+p.contact);
+  if((p.tags||[]).length)L.push('','**'+T('标签','Tags')+'**：'+p.tags.map(t=>'#'+t).join(' '));
+  const scored=dimsOf(p.cat).filter(d=>typeof p.scores[d.id]==='number');
+  if(scored.length)L.push('','**'+T('评分','Scores')+'**：'+scored.map(d=>d.name+' '+p.scores[d.id]).join(' · '));
+  if((p.profile||'').trim())L.push('','## '+T('人物侧写','Profile'),'',p.profile.trim());
+  if((p.notes||'').trim())L.push('','## '+T('备注','Notes'),'',p.notes.trim());
+  const aspects=(p.character||[]).filter(a=>(a.text||'').trim());
+  if(aspects.length){L.push('','---','','## 🧬 '+T('人物蒸馏','Character'));aspects.forEach(a=>{L.push('','### '+(a.label||''),'',a.text.trim());});}
+  const ess=(p.essence||[]).filter(e=>(e.topic||'').trim()||(e.text||'').trim()||(e.quote||'').trim());
+  if(ess.length){L.push('','## 💬 '+T('探讨精华','Discussion essence'));ess.forEach(e=>{const h=[(e.topic||'').trim()||T('（无题）','(untitled)')];if(e.date)h.push(e.date);L.push('','### '+h.join(' · '));if((e.text||'').trim())L.push('',e.text.trim());if((e.quote||'').trim())L.push('','> 「'+e.quote.trim()+'」');});}
+  const qs=(p.quotes||[]).filter(q=>(q.text||'').trim());
+  if(qs.length){L.push('','## ❝ '+T('金句·原话','Verbatim quotes'));qs.forEach(q=>{L.push('','> '+q.text.trim().replace(/\n/g,'\n> '));const meta=[(q.context||'').trim(),(q.date||'').trim()].filter(Boolean).join(' · ');if(meta)L.push('> — '+meta);});}
+  L.push('','',`*${T('导出自 People Atlas','Exported from People Atlas')} · ${new Date().toISOString().slice(0,10)}*`);
+  return L.join('\n');
+}
+function exportPersonMd(id){
+  const p=person(id);if(!p)return;
+  const nm=p.name||T('未命名','Unnamed');
+  const blob=new Blob([personMd(p)],{type:'text/markdown;charset=utf-8'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download=nm.replace(/[\/\\:*?"<>|]/g,'_')+'-'+T('档案','dossier')+'-'+new Date().toISOString().slice(0,10)+'.md';
+  a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+  toast(T('已导出 Markdown','Markdown exported'));
 }
 
 /* ============ 事件 & 启动 ============ */
